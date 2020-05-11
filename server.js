@@ -1,52 +1,51 @@
 "use strict";
 
-var express = require("express");
-var bodyParser = require("body-parser");
-const helmet = require("helmet");
-var cors = require("cors");
+const express = require("express"),
+  bodyParser = require("body-parser"),
+  cors = require("cors"),
+  app = express();
 
-var apiRoutes = require("./routes/api.js");
-var fccTestingRoutes = require("./routes/fcctesting.js");
-var runner = require("./test-runner");
-
-var app = express();
+// importing the necessary files
+const apiRoutes = require("./routes/api.js"),
+  fccTestingRoutes = require("./routes/fcctesting.js"),
+  runner = require("./test-runner");
 
 app.use("/public", express.static(process.cwd() + "/public"));
 
-app.use(cors({ origin: "*" })); //USED FOR FCC TESTING PURPOSES ONLY!
-
 app.use(bodyParser.json());
+app.use(cors({ origin: "*" })); //USED FOR FCC TESTING PURPOSES ONLY!
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // user stories 1 and 2
+const helmet = require("helmet"),
+  noCache = require("nocache");
 app.use(helmet.hidePoweredBy({ setTo: "PHP 4.2.0" }));
-app.use(helmet.noCache());
+app.use(noCache());
 
-//Index page (static HTML)
-app.route("/").get(function(req, res) {
-  res.sendFile(process.cwd() + "/views/index.html");
-});
+app // Index page (static HTML)
+  .route("/")
+  .get((req, res) => res.sendFile(process.cwd() + "/views/index.html"));
 
-//For FCC testing purposes
+// For FCC testing purposes
 fccTestingRoutes(app);
 
-//Routing for API
+// Routing for API
 apiRoutes(app);
 
-//404 Not Found Middleware
-app.use(function(req, res, next) {
+// 404 Not Found Middleware
+app.use((_, res) => {
   res
     .status(404)
     .type("text")
     .send("Not Found");
 });
 
-//Start our server and tests!
-app.listen(process.env.PORT || 3000, function() {
+// Start our server and tests!
+app.listen(process.env.PORT || 3000, () => {
   console.log("Listening on port " + process.env.PORT);
   if (process.env.NODE_ENV === "test") {
     console.log("Running Tests...");
-    setTimeout(function() {
+    setTimeout(() => {
       try {
         runner.run();
       } catch (e) {
@@ -58,4 +57,10 @@ app.listen(process.env.PORT || 3000, function() {
   }
 });
 
-module.exports = app; //for unit/functional testing
+module.exports = app; // for unit/functional testing
+
+// add NODE_ENV=test in .env file to run the automated tests
+// rewrite functional tests
+// rewrite api.js
+// move db schema to models/model
+// compare what the app returns at every step
