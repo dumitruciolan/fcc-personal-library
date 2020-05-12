@@ -1,27 +1,23 @@
 "use strict";
 
 const { expect } = require("chai"),
-  mongoose = require("mongoose"),
   Book = require("../models/bookModel");
 
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  useFindAndModify: false
-});
-
 module.exports = app => {
-  app // show the books
+  app // 4. show all books
     .route("/api/books")
-    .get((req, res) => {
-      // return all books without the comments and __v
-      Book.find({}, { comments: 0, __v: 0 }, (err, books) => {
-        if (err) return res.send("No books could be found");
-        if (books) return res.status(200).json(books);
-      });
+    .get((_, res) => {
+      Book.find(
+        {}, // return all books & exclude unnnecessary fields
+        { comments: 0, __v: 0, created_on: 0, updated_on: 0 },
+        (err, books) => {
+          if (err) res.send("No books could be found");
+          if (books) res.status(200).json(books);
+        }
+      );
     })
 
-    // add a book
+    // 3. add a new book
     .post((req, res) => {
       const { title } = req.body,
         book = new Book({
@@ -34,30 +30,41 @@ module.exports = app => {
 
       book
         .save()
-        .then(response => res.status(200).json(response))
+        .then(response =>
+          res.status(200).json({
+            title: response.title,
+            _id: response._id,
+            comments: response.comments
+          })
+        )
         .catch(() => res.status(200).send("missing inputs"));
     })
 
-    // delete all books
-    .delete((req, res) => {
+    // 9. delete all books
+    .delete((_, res) => {
       Book.deleteMany({}, (err, deleted) => {
-        if (err) return res.send("could not delete all the books");
-        if (deleted) return res.send("complete delete successful");
+        if (err) res.send("could not delete all the books");
+        if (deleted) res.send("complete delete successful");
       });
     });
 
-  app // retrieve a book
+  app // 5. get a book by id
     .route("/api/books/:id")
-    .get((req, res, next) => {
+    .get((req, res) => {
       const { id } = req.params;
 
-      // find by id and remove from view the  __v
-      Book.findById(id, { __v: 0 }, (err, book) => {
-        book ? res.status(200).json(book) : res.send("no book exists");
+      Book.findById(id, (err, book) => {
+        book
+          ? res.status(200).json({
+              _id: book._id,
+              title: book.title,
+              comments: book.comments
+            })
+          : res.send("no book exists");
       });
     })
 
-    // adding comments
+    // 6. add book comment
     .post((req, res) => {
       const { id } = req.params,
         { comment } = req.body;
@@ -71,18 +78,23 @@ module.exports = app => {
         },
         { new: true }, // returns a new value
         (err, book) => {
-          if (err) return res.send("cannot add the comment");
-          if (book) return res.status(200).json(book);
+          if (err) res.send("cannot add the comment");
+          if (book)
+            res.status(200).json({
+              title: book.title,
+              _id: book._id,
+              comments: book.comments
+            });
         }
       );
     })
 
-    // delete a book
+    // 7. delete a book
     .delete((req, res) => {
       const { id } = req.params;
       Book.findByIdAndDelete(id, (err, deleted) => {
-        if (err) return res.send("could not delete the book");
-        if (deleted) return res.send("delete successful");
+        if (err) res.send("could not delete the book");
+        if (deleted) res.send("delete successful");
       });
     });
 };

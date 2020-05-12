@@ -49,18 +49,10 @@ app.listen(process.env.PORT || 3000, () => {
       try {
         runner.run();
       } catch (e) {
-        var error = e;
-        console.log("Tests are not valid:");
-        console.log(error);
+        console.log("Tests are not valid: ", e);
       }
     }, 1500);
   }
 });
 
 module.exports = app; // for unit/functional testing
-
-// add NODE_ENV=test in .env file to run the automated tests
-// rewrite functional tests
-// rewrite api.js
-// move db schema to models/model
-// compare what the app returns at every step
