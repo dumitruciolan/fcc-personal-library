@@ -12,5 +12,12 @@ const BookSchema = new mongoose.Schema({
 });
 const Book = mongoose.model("Book", BookSchema);
 
-// export it so we can access it from other places
+// connect to the database
+mongoose.connect(process.env.MONGODB_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  useFindAndModify: false
+});
+
+// export model so we can access it from api.js
 module.exports = mongoose.model("Book", BookSchema);
